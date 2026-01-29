@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>FC Mobile Pro League</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- ===== ADD: jsPDF ===== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+    @media (max-width: 768px) {
+ /* CSS cho điện thoại */
+}
+@media (max-width:768px){
+ .main-header{
+  flex-direction:column;
+  gap:10px;
+  padding:12px;
+ }
+
+ .header-center h2{
+  font-size:18px;
+  text-align:center;
+ }
+
+ .header-right{
+  width:100%;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+ }
+
+ .header-right button,
+ .header-right select{
+  width:48%;
+ }
+}
+button{
+ min-height:44px;
+ padding:10px 16px;
+ border-radius:12px;
+ font-size:14px;
+}
+.table-wrap{
+ overflow-x:auto;
+ -webkit-overflow-scrolling:touch;
+}
+@media (max-width:768px){
+ .club-grid,
+ .player-grid{
+  grid-template-columns:1fr;
+ }
+}
+img{
+ max-width:100%;
+ height:auto;
+}
+.club-logo{
+ width:64px;
+ height:64px;
+ border-radius:50%;
+ object-fit:contain;
+}
+@media (max-width:768px){
+ .modal-content{
+  width:95%;
+  max-height:90vh;
+  overflow-y:auto;
+ }
+}
+body{
+ font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
+ font-size:14px;
+ line-height:1.6;
+}
+
+:root{
+ /* Brand */
+ --brand1:#37003c;
+ --brand2:#4f0058;
+ --accent:#22c55e;
+ --gold:#facc15;
+ --danger:#ef4444;
+
+ /* Dark theme (default) */
+ --bg:#070b18;
+ --bg-soft:#0b1224;
+ --card:#0f172a;
+ --line:#1e293b;
+ --text:#e5e7eb;
+ --muted:#94a3b8;
+
+ --radius:14px;
+}
+
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Ir,Segoe UInte,sans-serif;
+ background:
+  radial-gradient(1200px at 20% -10%,#1e0036 0%,transparent 60%),
+  radial-gradient(800px at 90% 10%,#003d2b 0%,transparent 55%),
+  linear-gradient(180deg,#050816,#070b18);
+ color:var(--text);
+ transition:background .4s,color .3s;
+}
+
+header{
+ padding:20px;
+ border-bottom:1px solid var(--line);
+ backdrop-filter:blur(10px);
+ background:rgba(15,23,42,.6);
+ transition:.3s;
+}
+button{
+ background:linear-gradient(135deg,#2563eb,#22c55e);
+ border:none;
+ padding:10px 16px;
+ color:#fff;
+ border-radius:10px;
+ cursor:pointer;
+}
+button.danger{background:var(--danger)}
+.container{max-width:1200px;margin:auto;padding:20px}
+.card{
+ background:linear-gradient(180deg,var(--card),var(--bg-soft));
+ border:1px solid var(--line);
+ border-radius:var(--radius);
+ padding:18px;
+ margin-bottom:22px;
+ box-shadow:0 10px 30px rgba(0,0,0,.25);
+ transition:.3s;
+}
+h3{margin-top:0}
+.players{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+ gap:14px;
+}
+.player{
+ border:1px solid var(--line);
+ border-radius:12px;
+ padding:12px;
+ text-align:center;
+ cursor:pointer;
+}
+.player img{
+ width:64px;height:64px;
+ border-radius:50%;
+ border:2px solid var(--accent);
+ margin-bottom:6px;
+}
+
+table{width:100%;border-collapse:collapse}
+th,td{
+ padding:8px;
+ border-bottom:1px solid var(--line);
+ text-align:center;
+}
+select,input{
+ padding:8px;
+ border-radius:8px;
+ border:none;
+ margin:4px;
+}
+.modal{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.7);
+ display:none;
+ align-items:center;
+ justify-content:center;
+}
+.modal .box{
+ width:420px;
+ background:var(--card);
+ border-radius:16px;
+ padding:20px;
+}
+.section{
+ margin-top:12px;
+ line-height:1.6;
+}
+.season-item{
+ border:1px solid var(--line);
+ border-radius:10px;
+ padding:10px 12px;
+ margin-bottom:8px;
+ cursor:pointer;
+ transition:.2s;
+}
+.season-item:hover{background:#0b1220}
+
+.season-head{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ font-weight:600;
+}
+
+.season-detail{
+ display:none;
+ margin-top:8px;
+ font-size:14px;
+ color:var(--muted);
+ line-height:1.6;
+}
+.season-item.active .season-detail{display:block}
+/* ===== EPL TABLE STYLE ===== */
+#tableCard table{
+ background:#0f172a;
+ border-radius:12px;
+ overflow:hidden;
+}
+
+#tableCard thead{
+ background:linear-gradient(90deg,#37003c,#4f0058);
+}
+
+#tableCard th{
+ color:#fff;
+ font-weight:700;
+ font-size:13px;
+ text-transform:uppercase;
+ padding:12px 6px;
+}
+
+#tableCard td{
+ padding:10px 6px;
+ font-size:14px;
+}
+
+#tableCard tbody tr{
+ transition:.2s;
+}
+
+#tableCard tbody tr:hover{
+ background:#020617;
+}
+
+/* Thứ hạng */
+.rank{
+ font-weight:700;
+}
+
+/* Top 4 – C1 */
+tr.top4 td:first-child{
+ color:#22c55e;
+ font-weight:800;
+}
+
+/* Xuống hạng */
+tr.relegation td:first-child{
+ color:#ef4444;
+ font-weight:800;
+}
+
+/* CLB */
+.club{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ justify-content:flex-start;
+}
+
+.club img{
+ width:22px;
+ height:22px;
+ border-radius:50%;
+}
+.club-row{display:flex;align-items:center;gap:8px}
+.club-card{cursor:pointer;text-align:center}
+
+
+/* Điểm */
+.points{
+ font-weight:800;
+ color:#facc15;
+}
+/* ===== LIGHT MODE ===== */
+body.light{
+ --bg:#f4f6fb;
+ --bg-soft:#eef1f7;
+ --card:#ffffff;
+ --line:#e2e8f0;
+ --text:#010307;
+ --muted:#475569;
+
+ background:
+  radial-gradient(1200px at 20% -10%,#e9d5ff 0%,transparent 60%),
+  radial-gradient(800px at 90% 10%,#d1fae5 0%,transparent 55%),
+  linear-gradient(180deg,#f4f6fb,#eef1f7);
+ color:var(--text);
+}
+body.light .card{
+ box-shadow:0 10px 30px rgba(15,23,42,.08);
+}
+
+body.light header{
+ background:rgba(255,255,255,.7);
+}
+/* ===== FIX TABLE FOR LIGHT MODE ===== */
+body.light #tableCard table{
+ border-radius:14px;
+ border:1px solid #e2e8f0;
+}
+
+body.light #tableCard thead{
+ background:linear-gradient(90deg,#37003c,#4f0058);
+}
+
+body.light #tableCard th{
+ color:#ffffff;
+}
+
+body.light #tableCard td{
+ color:#0f172a;
+}
+
+body.light #tableCard tbody tr{
+ background:#ffffff;
+}
+
+body.light #tableCard tbody tr:nth-child(even){
+ background:#f8fafc;
+}
+
+body.light #tableCard tbody tr:hover{
+ background:#e2e8f0;
+}
+
+/* Điểm */
+body.light .points{
+ color:#b45309;
+}
+body.light tr.top4{
+ background:#ecfdf5;
+}
+
+.theme-btn{
+ background:linear-gradient(135deg,var(--brand1),var(--brand2));
+ border:none;
+ padding:10px 14px;
+ border-radius:50%;
+ font-size:16px;
+ cursor:pointer;
+}
+tr.top4{
+ border-left:4px solid #22c55e;
+}
+tr.relegation{
+ border-left:4px solid #ef4444;
+}
+/* ===== HEADER LAYOUT ===== */
+.main-header{
+ display:grid;
+ grid-template-columns:auto 1fr auto;
+ align-items:center;
+ gap:16px;
+}
+
+.header-left{
+ display:flex;
+ align-items:center;
+}
+
+.header-center{
+ text-align:center;
+}
+
+.header-center h2{
+ margin:0;
+ font-size:22px;
+ font-weight:800;
+ letter-spacing:.5px;
+}
+
+.header-right{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ justify-content:flex-end;
+}
+
+/* Responsive nhẹ */
+@media(max-width:768px){
+ .main-header{
+  grid-template-columns:1fr;
+  text-align:center;
+ }
+ .header-right{
+  justify-content:center;
+  flex-wrap:wrap;
+ }
+}
+.league-logo{
+ width:44px;
+ height:44px;
+ margin-left:10px;
+
+ border-radius:50%;
+ object-fit:contain;
+
+ background:radial-gradient(circle at top,#ffffff,#e5e7eb);
+ padding:4px;
+
+ box-shadow:
+  0 0 0 2px rgba(255,255,255,.6),
+  0 6px 16px rgba(0,0,0,.35);
+
+ transition:.3s;
+}
+
+.league-logo:hover{
+ transform:scale(1.08) rotate(-2deg);
+ box-shadow:
+  0 0 0 3px #22c55e,
+  0 10px 25px rgba(0,0,0,.45);
+}
+/* ===== GLOBAL BUTTON PRO EFFECT ===== */
+button{
+ position:relative;
+ transition:
+  transform .25s ease,
+  box-shadow .25s ease,
+  filter .25s ease;
+}
+
+/* Hover nổi lên */
+button:hover{
+ transform:translateY(-3px) scale(1.03);
+ filter:brightness(1.08);
+
+ box-shadow:
+  0 12px 30px rgba(0,0,0,.35),
+  0 0 0 1px rgba(255,255,255,.35);
+}
+
+/* Click cảm giác thật */
+button:active{
+ transform:translateY(0) scale(.96);
+ box-shadow:
+  0 4px 12px rgba(0,0,0,.45) inset;
+}
+button{
+ position:relative;
+ overflow:hidden;
+ transition:
+  transform .25s ease,
+  box-shadow .25s ease,
+  background .25s ease;
+}
+
+/* ===== NORMAL ===== */
+button{
+ background:linear-gradient(135deg,#06b6d4,#22c55e);
+ box-shadow:
+  0 6px 16px rgba(34,197,94,.35),
+  inset 0 0 0 rgba(255,255,255,0);
+}
+
+/* ===== HOVER ===== */
+button:hover{
+ background:linear-gradient(135deg,#0ea5e9,#16a34a);
+ transform:translateY(-2px) scale(1.03);
+ box-shadow:
+  0 12px 28px rgba(14,165,233,.45),
+  0 0 0 2px rgba(255,255,255,.35);
+}
+
+/* ===== ACTIVE (click) ===== */
+button:active{
+ transform:translateY(0) scale(.98);
+ box-shadow:
+  0 6px 14px rgba(0,0,0,.35) inset;
+}
+/* Logo nhỏ */
+.league-logo{
+ width:46px;
+ height:46px;
+ border-radius:50%;
+ cursor:pointer;
+ transition:.25s;
+}
+.league-logo:hover{
+ transform:scale(1.12);
+}
+
+/* Modal nền */
+.logo-modal{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.75);
+ backdrop-filter:blur(6px);
+ display:none;
+ align-items:center;
+ justify-content:center;
+ z-index:9999;
+}
+
+/* Logo phóng to */
+.logo-modal img{
+ width:240px;
+ max-width:80%;
+ border-radius:50%;
+ box-shadow:
+  0 30px 80px rgba(0,0,0,.6),
+  0 0 0 4px rgba(255,255,255,.12);
+ animation:zoomIn .35s ease;
+}
+
+/* Nút đóng */
+.logo-close{
+ position:absolute;
+ top:20px;
+ right:30px;
+ font-size:38px;
+ color:#fff;
+ cursor:pointer;
+ opacity:.8;
+}
+.logo-close:hover{opacity:1}
+
+/* Animation */
+@keyframes zoomIn{
+ from{transform:scale(.6);opacity:0}
+ to{transform:scale(1);opacity:1}
+}
+.zoomable{
+ width:46px;
+ height:46px;
+ border-radius:50%;
+ object-fit:contain;
+ cursor:pointer;
+ transition:.25s ease;
+
+ box-shadow:
+  0 0 0 2px rgba(255,255,255,.5),
+  0 6px 18px rgba(0,0,0,.45);
+}
+
+.zoomable:hover{
+ transform:scale(1.15);
+ box-shadow:
+  0 0 0 3px rgba(34,197,94,.6),
+  0 10px 30px rgba(34,197,94,.5);
+}
+.zoom-modal{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.75);
+ backdrop-filter:blur(6px);
+ display:none;
+ align-items:center;
+ justify-content:center;
+ z-index:9999;
+}
+
+.zoom-modal img{
+ width:260px;
+ max-width:80%;
+ border-radius:50%;
+ animation:zoomIn .35s ease;
+}
+
+@keyframes zoomIn{
+ from{transform:scale(.6);opacity:0}
+ to{transform:scale(1);opacity:1}
+}
+
+</style>
+</head>
+
+<body>
+    
+<div id="zoomModal" class="zoom-modal">
+ <img id="zoomImg">
+</div>
+
+
+<header class="main-header">
+ <div class="header-left">
+  <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+ </div>
+
+ <div class="header-center">
+  <h2>⚽ FC Mobile Pro League</h2>
+  <span><img src="ChatGPT Image Jan 29, 2026, 10_31_30 AM.png"   class="zoomable"
+     onclick="openZoom(this.src)"></span>
+ </div>
+
+ <div class="header-right">
+  <select id="seasonSelect"></select>
+  <button onclick="newSeason()">+ Mùa mới</button>
+  <button class="danger" onclick="deleteSeason()">Xóa mùa</button>
+ </div>
+</header>
+
+
+<div class="container">
+
+<div class="card">
+<h3>👥 Người chơi</h3>
+<div class="players" id="players"></div>
+</div>
+
+<div class="card">
+<h3>✍️ Nhập kết quả trận đấu</h3>
+<select id="p1"></select>
+<input id="g1" type="number" placeholder="Bàn A">
+<select id="p2"></select>
+<input id="g2" type="number" placeholder="Bàn B">
+<br><br>
+<button onclick="addMatch()">Lưu trận</button>
+</div>
+
+<div class="card" id="tableCard">
+<h3>📊 Bảng xếp hạng</h3>
+<button onclick="exportPDF()">Xuất PDF</button>
+<table>
+<thead>
+<tr>
+ <th>#</th>
+ <th>CLB</th>
+ <th>MP</th>
+ <th>W</th>
+ <th>D</th>
+ <th>L</th>
+ <th>GF</th>
+ <th>GA</th>
+ <th>GD</th>
+ <th>PTS</th>
+</tr>
+</thead>
+
+<tbody id="table"></tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>📈 Biểu đồ bàn thắng</h3>
+<canvas id="goalChart"></canvas>
+</div>
+
+<div class="card">
+<h3>📊 Biểu đồ phong độ theo mùa</h3>
+
+<select id="formPlayerSelect"></select>
+<button onclick="showFormChart()">Xem biểu đồ</button>
+
+<canvas id="formChart" height="120"></canvas>
+</div>
+
+<div class="card">
+<h3>👤 Thống kê chi tiết theo mùa</h3>
+
+<select id="playerHistorySelect"></select>
+<button onclick="showPlayerSeasonHistory()">Xem thống kê</button>
+
+<div id="playerSeasonHistory" class="section"></div>
+</div>
+
+<div class="card">
+<h3>🤝 Đối đầu theo mùa</h3>
+<select id="h2h1"></select>
+<select id="h2h2"></select>
+<button onclick="showH2H()">Xem</button>
+<div id="h2hResult" class="section"></div>
+</div>
+
+<div class="card">
+<h3>📜 Lịch sử đối đầu toàn giải</h3>
+<select id="allH2H1"></select>
+<select id="allH2H2"></select>
+<button onclick="showAllTimeH2H()">A vs B</button>
+<button onclick="showAllTimeSummary()">Tổng toàn giải</button>
+<div id="allH2HResult" class="section"></div>
+
+<!-- ===== ADD: GLOBAL TITLES UI ===== -->
+<hr style="border:1px solid var(--line);margin:18px 0">
+<h4 style="color:var(--gold)">🏆 Danh hiệu toàn giải</h4>
+<div id="globalTitles" class="section"></div>
+
+</div>
+
+</div>
+
+<!-- ===== CLUB PROFILE MODAL ===== -->
+<div class="modal" id="clubModal">
+ <div class="box">
+  <h3 id="clubName"></h3>
+  <div id="clubInfo" class="section"></div>
+  <br>
+  <button onclick="clubModal.style.display='none'">Đóng</button>
+ </div>
+</div>
+
+
+<script>
+    function toggleTheme(){
+ document.body.classList.toggle("light");
+ localStorage.setItem("theme",
+  document.body.classList.contains("light")?"light":"dark");
+}
+
+// auto load theme
+if(localStorage.getItem("theme")==="light"){
+ document.body.classList.add("light");
+}
+
+const avatars={
+ "Phan Đức":"md-a57ff7df167245d9bdeba8d2f997815f99.jpg",
+ "Lâm Hùng":"il_1588xN.4238041533_k8li.jpg",
+ "Khánh Huy":"Real-Madrid-Logo-3.png",
+ "Trung Kiên":"OIP.webp"
+};
+
+let seasons=JSON.parse(localStorage.getItem("seasons"))||[];
+let current=+localStorage.getItem("currentSeason")||0;
+
+function save(){
+ localStorage.setItem("seasons",JSON.stringify(seasons));
+ localStorage.setItem("currentSeason",current);
+}
+
+function newSeason(init=false){
+ seasons.push({
+  name:"Season "+(seasons.length+1),
+  players:Object.keys(avatars).map(n=>({
+   name:n,mp:0,w:0,d:0,l:0,gf:0,ga:0,pts:0
+  })),
+  matches:[]
+ });
+ save();
+ if(!init) renderAll();
+}
+if(seasons.length===0) newSeason(true);
+
+function renderAll(){
+ renderSeasonSelect();
+ render();
+}
+
+function renderSeasonSelect(){
+ seasonSelect.innerHTML=seasons.map((s,i)=>
+  `<option value="${i}">${s.name}</option>`).join("");
+ seasonSelect.value=current;
+}
+
+seasonSelect.onchange=()=>{
+ current=+seasonSelect.value;
+ save();render();
+};
+
+function render(){
+ const s=seasons[current];
+
+ players.innerHTML=s.players.map(p=>`
+ <div class="club" onclick="showClubProfile('${p.name}')">
+  <img src="${avatars[p.name]}">
+  <div>${p.name}</div>
+ </div>`).join("");
+
+ [p1,p2,h2h1,h2h2].forEach(sel=>{
+  sel.innerHTML=s.players.map(p=>`<option>${p.name}</option>`).join("");
+ });
+
+ [allH2H1,allH2H2].forEach(sel=>{
+  sel.innerHTML=seasons[0].players.map(p=>`<option>${p.name}</option>`).join("");
+ });
+table.innerHTML=[...s.players]
+.sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga))
+.map((p,i)=>{
+ let cls="";
+ if(i<4) cls="top4";
+ if(i>=s.players.length-2) cls="relegation";
+
+ return `
+ <tr class="${cls}">
+  <td class="rank">${i+1}</td>
+  <td>
+   <div class="club">
+    <img src="${avatars[p.name]}">
+    ${p.name}
+   </div>
+  </td>
+  <td>${p.mp}</td>
+  <td>${p.w}</td>
+  <td>${p.d}</td>
+  <td>${p.l}</td>
+  <td>${p.gf}</td>
+  <td>${p.ga}</td>
+  <td>${p.gf-p.ga}</td>
+  <td class="points">${p.pts}</td>
+ </tr>
+ `;
+}).join("");
+
+ renderChart(s.players);
+  afterRender();
+}
+
+function addMatch(){
+ const s=seasons[current];
+ const a=s.players.find(p=>p.name===p1.value);
+ const b=s.players.find(p=>p.name===p2.value);
+ const gA=+g1.value;
+ const gB=+g2.value;
+ if(a===b) return alert("Không thể đá với chính mình");
+
+ [a,b].forEach(p=>p.mp++);
+ a.gf+=gA;a.ga+=gB;
+ b.gf+=gB;b.ga+=gA;
+
+ if(gA>gB){a.w++;b.l++;a.pts+=3}
+ else if(gA<gB){b.w++;a.l++;b.pts+=3}
+ else{a.d++;b.d++;a.pts++;b.pts++}
+
+ s.matches.push({a:a.name,b:b.name,ga:gA,gb:gB});
+ save();render();
+}
+
+let chart;
+function renderChart(players){
+
+ if(chart) chart.destroy();
+ chart=new Chart(goalChart,{
+  type:"bar",
+  data:{
+   labels:players.map(p=>p.name),
+   datasets:[{data:players.map(p=>p.gf)}]
+  }
+ });
+}
+/* ===== ADD: FORM CHART BY SEASON ===== */
+
+let formChart;
+
+// load danh sách người chơi
+function loadFormPlayerSelect(){
+ const sel=document.getElementById("formPlayerSelect");
+ sel.innerHTML=Object.keys(avatars)
+  .map(n=>`<option value="${n}">${n}</option>`)
+  .join("");
+}
+
+// vẽ biểu đồ phong độ
+function showFormChart(){
+ const name=document.getElementById("formPlayerSelect").value;
+
+ const labels=[];
+ const points=[];
+
+ seasons.forEach(s=>{
+  const p=s.players.find(x=>x.name===name);
+  if(p){
+   labels.push(s.name);
+   points.push(p.pts);
+  }
+ });
+
+ if(formChart) formChart.destroy();
+
+ formChart=new Chart(document.getElementById("formChart"),{
+  type:"line",
+  data:{
+   labels,
+   datasets:[{
+    label:`Phong độ ${name}`,
+    data:points,
+    tension:0.3,
+    fill:true,
+    borderWidth:3,
+    pointRadius:5
+   }]
+  },
+  options:{
+   plugins:{
+    legend:{display:true},
+    tooltip:{enabled:true}
+   },
+   scales:{
+    y:{
+     beginAtZero:true,
+     ticks:{stepSize:1}
+    }
+   }
+  }
+ });
+}
+
+// hook render an toàn
+const _render3 = render;
+render = function(){
+ _render3();
+ loadFormPlayerSelect();
+};
+function afterRender(){
+ loadFormPlayerSelect();
+ loadPlayerHistorySelect();
+ calcGlobalTitles();
+}
+
+/* ===== ADD: PLAYER SEASON HISTORY ===== */
+
+// đổ danh sách người chơi
+function loadPlayerHistorySelect(){
+ const sel=document.getElementById("playerHistorySelect");
+ sel.innerHTML=Object.keys(avatars)
+  .map(n=>`<option value="${n}">${n}</option>`)
+  .join("");
+}
+
+// hiển thị thống kê từng mùa
+function showPlayerSeasonHistory(){
+ const name=document.getElementById("playerHistorySelect").value;
+ let html="";
+
+ seasons.forEach(s=>{
+  const p=s.players.find(x=>x.name===name);
+  if(!p) return;
+
+  const sorted=[...s.players]
+   .sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga));
+  const rank=sorted.findIndex(x=>x.name===name)+1;
+
+  html+=`
+  <div class="season-item" onclick="this.classList.toggle('active')">
+   <div class="season-head">
+    <span>🏆 ${s.name}</span>
+    <span>#${rank} | ${p.pts}đ</span>
+   </div>
+
+   <div class="season-detail">
+    Trận: ${p.mp} |
+    Thắng: ${p.w} |
+    Hòa: ${p.d} |
+    Thua: ${p.l}<br>
+    ⚽ BT: ${p.gf} |
+    🧤 BB: ${p.ga} |
+    HS: ${p.gf-p.ga}
+   </div>
+  </div>
+  `;
+ });
+
+ document.getElementById("playerSeasonHistory").innerHTML=
+  html || "Chưa có dữ liệu";
+}
+
+// tự load khi render
+const _render2 = render;
+render = function(){
+ _render2();
+ loadPlayerHistorySelect();
+};
+
+function calcH2H(matches,A,B,el,king){
+ let s={m:0,Aw:0,Bw:0,d:0,Ag:0,Bg:0};
+ matches.forEach(m=>{
+  if((m.a===A&&m.b===B)||(m.a===B&&m.b===A)){
+   s.m++;
+   let ga=m.a===A?m.ga:m.gb;
+   let gb=m.a===A?m.gb:m.ga;
+   s.Ag+=ga;s.Bg+=gb;
+   if(ga>gb)s.Aw++;
+   else if(gb>ga)s.Bw++;
+   else s.d++;
+  }
+ });
+ let crown=king
+ ?(s.Aw>s.Bw?`👑 ${A}`:s.Bw>s.Aw?`👑 ${B}`:"🤝 Cân bằng")
+ :"";
+ el.innerHTML=`
+ <b>${A} vs ${B}</b><br>
+ Trận: ${s.m}<br>
+ Thắng: ${A} ${s.Aw} – ${B} ${s.Bw}<br>
+ Hòa: ${s.d}<br>
+ Bàn: ${s.Ag} – ${s.Bg}<br>
+ <span style="color:var(--gold)">${crown}</span>
+ `;
+}
+
+function showH2H(){
+ calcH2H(seasons[current].matches,h2h1.value,h2h2.value,h2hResult,false);
+}
+
+function showAllTimeH2H(){
+ let all=[];
+ seasons.forEach(s=>all.push(...s.matches));
+ calcH2H(all,allH2H1.value,allH2H2.value,allH2HResult,true);
+}
+
+function showAllTimeSummary(){
+ let stats={};
+ seasons.forEach(s=>s.matches.forEach(m=>{
+  let k=[m.a,m.b].sort().join(" vs ");
+  if(!stats[k]) stats[k]={A:m.a,B:m.b,m:0,Aw:0,Bw:0,d:0,Ag:0,Bg:0};
+  let x=stats[k];
+  x.m++;x.Ag+=m.ga;x.Bg+=m.gb;
+  if(m.ga>m.gb)x.Aw++;
+  else if(m.ga<m.gb)x.Bw++;
+  else x.d++;
+ }));
+ allH2HResult.innerHTML=
+ Object.values(stats).map(s=>{
+  let k=s.Aw>s.Bw?`👑 ${s.A}`:s.Bw>s.Aw?`👑 ${s.B}`:"🤝";
+  return`
+  <div style="border-bottom:1px solid var(--line);padding:10px 0">
+   <b>${s.A} vs ${s.B}</b><br>
+   Trận: ${s.m} | Bàn: ${s.Ag}-${s.Bg}<br>
+   ${k}
+  </div>`;
+ }).join("")||"Chưa có dữ liệu";
+}
+
+function showPlayer(name){
+ const p=seasons[current].players.find(x=>x.name===name);
+ modalName.innerText=name;
+ modalStats.innerHTML=`
+ Số trận: ${p.mp}<br>
+ Thắng: ${p.w}<br>
+ Hòa: ${p.d}<br>
+ Thua: ${p.l}<br>
+ Bàn thắng: ${p.gf}<br>
+ Bàn thua: ${p.ga}
+ `;
+ playerModal.style.display="flex";
+}
+
+function deleteSeason(){
+ if(!confirm("Xóa mùa này?"))return;
+ seasons.splice(current,1);
+ if(current>=seasons.length) current=seasons.length-1;
+ if(seasons.length===0){newSeason(true);current=0;}
+ seasons.forEach((s,i)=>s.name="Season "+(i+1));
+ save();renderAll();
+}
+
+/* ===== ADD: EXPORT PDF ===== */
+function exportTablePDF(){
+ const { jsPDF } = window.jspdf;
+ const doc=new jsPDF();
+ doc.text("FC Mobile Pro League - BẢNG XẾP HẠNG",14,16);
+ let y=28;
+ [...document.querySelectorAll("#table tr")].forEach(r=>{
+  doc.text(r.innerText.replace(/\t/g," | "),14,y);
+  y+=7;
+ });
+ doc.save("BXH_FC_Mobile.pdf");
+}
+
+/* ===== ADD: GLOBAL TITLES ===== */
+function calcGlobalTitles(){
+ let stats={};
+ seasons.forEach(s=>{
+  let sorted=[...s.players]
+   .sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga));
+  sorted.forEach((p,i)=>{
+   if(!stats[p.name])
+    stats[p.name]={cup:0,s2:0,s3:0,last:0,gf:0,ga:0};
+   stats[p.name].gf+=p.gf;
+   stats[p.name].ga+=p.ga;
+   if(i===0)stats[p.name].cup++;
+   if(i===1)stats[p.name].s2++;
+   if(i===2)stats[p.name].s3++;
+   if(i===sorted.length-1)stats[p.name].last++;
+  });
+ });
+ let arr=Object.entries(stats);
+ if(arr.length===0)return;
+ const max=k=>arr.sort((a,b)=>b[1][k]-a[1][k])[0];
+ let cupList = arr
+ .map(([name,v])=>`- ${name}: ${v.cup} 🏆`)
+ .join("<br>");
+ globalTitles.innerHTML=`
+ 👑 Vua phá lưới: ${arr.sort((a,b)=>b[1].gf-a[1].gf)[0][0]}<br>
+ 🏆 Vua vô địch: ${max("cup")[0]} (${max("cup")[1].cup})<br>
+ 🥈 Vua về nhì: ${max("s2")[0]}<br>
+ 🥉 Vua về ba: ${max("s3")[0]}<br>
+ 💀 Vua bét bảng: ${max("last")[0]}<br>
+ 🧤 Thủng lưới ít nhất: ${arr.sort((a,b)=>a[1].ga-b[1].ga)[0][0]}<br>
+ 🕳️ Thủng lưới nhiều nhất: ${arr.sort((a,b)=>b[1].ga-a[1].ga)[0][0]}
+ <hr style="border:1px dashed var(--line);margin:8px 0">
+ <b>📊 Số lần vô địch toàn giải:</b><br>
+ ${cupList}
+`;
+
+}
+
+/* ===== ADD: AUTO HOOK ===== */
+const _render=render;
+render=function(){
+ _render();
+ calcGlobalTitles();
+};
+
+function exportPDF(){
+ html2canvas(tableCard).then(c=>{
+  const pdf=new jspdf.jsPDF();
+  pdf.addImage(
+   c.toDataURL("image/png"),
+   "PNG",
+   10,10,
+   190,
+   (c.height*190)/c.width
+  );
+  pdf.save("bang-xep-hang.pdf");
+ });
+}
+
+function showClubProfile(name){
+ let total={
+  seasons:0,cup:0,second:0,last:0,
+  gf:0,ga:0,pts:0
+ };
+
+ seasons.forEach(s=>{
+  const p=s.players.find(x=>x.name===name);
+  if(!p) return;
+
+  total.seasons++;
+  total.gf+=p.gf;
+  total.ga+=p.ga;
+  total.pts+=p.pts;
+
+  const sorted=[...s.players]
+   .sort((a,b)=>b.pts-a.pts||(b.gf-b.ga)-(a.gf-a.ga));
+  const rank=sorted.findIndex(x=>x.name===name);
+
+  if(rank===0) total.cup++;
+  if(rank===1) total.second++;
+  if(rank===sorted.length-1) total.last++;
+ });
+
+ clubName.innerHTML=`
+ <img src="${avatars[name]}" style="width:36px;border-radius:50%;vertical-align:middle">
+ ${name}
+ `;
+
+ clubInfo.innerHTML=`
+ <b>📊 Thành tích toàn giải</b><br>
+ 🏆 Vô địch: ${total.cup}<br>
+ 🥈 Về nhì: ${total.second}<br>
+ 💀 Bét bảng: ${total.last}<br>
+ <hr style="border:1px solid var(--line)">
+ ⚽ Tổng bàn thắng: ${total.gf}<br>
+ 🧤 Tổng bàn thua: ${total.ga}<br>
+ 🎯 Tổng điểm: ${total.pts}<br>
+ 📅 Số mùa tham gia: ${total.seasons}<br>
+ 📈 Điểm TB/mùa: ${(total.pts/Math.max(1,total.seasons)).toFixed(1)}
+ `;
+
+ clubModal.style.display="flex";
+}
+const logoModal = document.getElementById("logoModal");
+const logoModalImg = document.getElementById("logoModalImg");
+
+const zoomModal = document.getElementById("zoomModal");
+const zoomImg   = document.getElementById("zoomImg");
+
+function openZoom(src){
+ zoomImg.src = src;
+ zoomModal.style.display = "flex";
+}
+
+zoomModal.onclick = e=>{
+ if(e.target === zoomModal)
+  zoomModal.style.display = "none";
+};
+
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape")
+  zoomModal.style.display="none";
+});
+
+
+renderAll();
+</script>
+
+</body>
+</html>
